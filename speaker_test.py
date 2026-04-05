@@ -5,7 +5,7 @@ import time
 pygame.mixer.init()
 
 # 2. Load your file (make sure the name matches!)
-pygame.mixer.music.load("song.mp3")
+pygame.mixer.music.load("song cut.mp3")
 
 pygame.mixer.music.set_volume(0.5)
 # 3. Start playing
