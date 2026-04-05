@@ -3,7 +3,7 @@ import board
 import neopixel
 
 PIXEL_PIN = board.D18   # GPIO18 (pin 12)
-NUM_PIXELS = 30
+NUM_PIXELS = 240
 
 pixels = neopixel.NeoPixel(
     PIXEL_PIN,
@@ -27,8 +27,12 @@ time.sleep(1)
 # Test 4: One-by-one white
 pixels.fill((0, 0, 0))
 for i in range(NUM_PIXELS):
-    pixels[i] = (255, 255, 255)
+    pixels[i] = (255, 0, 0)
+    pixels[i+1] = (255, 0, 0)
     time.sleep(0.05)
+    pixels[i] = (0, 0, 0)
+
+    pixels[NUM_PIXELS-1] = (0, 0, 0)
 
 # Turn off
 pixels.fill((0, 0, 0))
