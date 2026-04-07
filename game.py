@@ -204,7 +204,8 @@ def play_song():
         ("green",  2, 460),
         ("yellow", 2, 480),
         ("blue",   2, 500),
-        
+
+        """
         # Building: pairs (8-16s)
         ("red",    3, 530),  ("green",  3, 530),
         ("yellow", 3, 580),  ("blue",   3, 580),
@@ -250,6 +251,7 @@ def play_song():
         ("blue",   2, 2230),
         ("yellow", 2, 2260),
         ("green",  2, 2290),
+        """
     ]
 
     run_sequence(sequence)
