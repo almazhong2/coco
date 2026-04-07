@@ -11,7 +11,7 @@ os.environ["AUDIODEV"] = "hw:2,0"
 
 PIXEL_PIN = board.D18
 NUM_PIXELS = 240
-FRAME_DELAY = 0.015
+FRAME_DELAY = 0.02
 STREAK_LENGTH = 12
 FLASH_FRAMES = 8
 
@@ -38,6 +38,9 @@ BUTTON_PINS = {
 for pin in BUTTON_PINS:
     GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
+STRUM_PIN = 19
+GPIO.setup(STRUM_PIN, GPIO.IN, pull_up_down = GPIO.PUD_UP)
+
 
 ################ STRIP SETUP ################
 STRIPS = {
@@ -52,6 +55,7 @@ class Streak:
     def __init__(self, strip_name, speed=1):
         strip = STRIPS[strip_name]
         self.color = strip["color"]
+        self.strip_name = strip_name
         self.start = strip["range"][0]
         self.end = strip["range"][1]
         self.length = self.end - self.start
@@ -94,7 +98,23 @@ class Streak:
 
                 pixel_buffer[index] = (int(r*fade), int(g*fade), int(b*fade))
 
-#hit detection
+
+################ STRUM DETECTION ################
+class StrumDetector:
+    def __init__(self):
+        self.down_last = False
+
+    
+    def update(self):
+        down_held = GPIO.input(STRUM_PIN) == GPIO.LOW
+        just_strummed = down_held and not self.down_last
+        self.down_last = down_held
+        return just_strummed
+
+
+################ HIT DETECTION ################
+
+#notes
 def button_pressed(active_streaks, button_states):
     for pin, strip_name in BUTTON_PINS.items():
         if strip_name == "start":
@@ -111,7 +131,22 @@ def button_pressed(active_streaks, button_states):
                     streak.hit()
                     break
 
+#strum
+def check_strum(active_streaks, strum_detector):
+    if not strum_detector.update():
+        return
+    
+    held_buttons = set()
 
+    for pin, strip_name in BUTTON_PINS.items():
+        if strip_name != "start" and GPIO.input(pin) == GPIO.LOW:
+            held_buttons.add(strip_name)
+        
+    for streak in active_streaks:
+        if streak.in_zone and streak.strip_name in held_buttons:
+            streak.hit()
+
+#start
 def start_button_pressed(start_state):
     held = GPIO.input(17) == GPIO.LOW
     pressed = held and not start_state
@@ -122,7 +157,8 @@ def run_sequence(sequence):
     active_streaks = []
     pending = list(sequence)
     button_states = {}
-    frame = 0
+    strum_detector = StrumDetector()
+    frame = 0 
     start_state = True
 
     state = "IDLE"
@@ -152,7 +188,7 @@ def run_sequence(sequence):
                 name, speed, _ = pending.pop(0)
                 active_streaks.append(Streak(name, speed))
 
-            button_pressed(active_streaks, button_states)
+            check_strum(active_streaks, strum_detector)
             pixel_buffer = [(0, 0 , 0)] * NUM_PIXELS
         
             for streak in active_streaks:
@@ -204,54 +240,6 @@ def play_song():
         ("green",  2, 460),
         ("yellow", 2, 480),
         ("blue",   2, 500),
-
-        """
-        # Building: pairs (8-16s)
-        ("red",    3, 530),  ("green",  3, 530),
-        ("yellow", 3, 580),  ("blue",   3, 580),
-        ("red",    3, 640),  ("yellow", 3, 655),
-        ("green",  3, 640),  ("blue",   3, 655),
-        ("red",    3, 720),  ("blue",   3, 720),
-        ("yellow", 3, 760),  ("green",  3, 760),
-        ("red",    3, 820),  ("yellow", 3, 830),
-        ("green",  3, 840),  ("blue",   3, 850),
-        # Chorus: fast and dense (16-24s)
-        ("red",    4, 1070), ("yellow", 4, 1085),
-        ("green",  4, 1100), ("blue",   4, 1115),
-        ("red",    4, 1150), ("green",  4, 1150),
-        ("yellow", 4, 1175), ("blue",   4, 1175),
-        ("red",    4, 1210), ("blue",   4, 1210),
-        ("red",    4, 1250), ("yellow", 4, 1250),
-        ("green",  4, 1290), ("blue",   4, 1290),
-        ("green",  4, 1330), ("red",    4, 1330),
-        ("yellow", 5, 1380), ("blue",   5, 1390),
-        ("red",    5, 1400), ("green",  5, 1410),
-        ("red",    4, 1450), ("yellow", 4, 1460),
-        ("green",  4, 1470), ("blue",   4, 1480),
-        ("red",    4, 1520), ("green",  4, 1520),
-        ("yellow", 4, 1545), ("blue",   4, 1545),
-        # Break: sparse (24-28s)
-        ("red",    2, 1600),
-        ("blue",   2, 1670),
-        ("yellow", 2, 1740),
-        ("green",  2, 1810),
-        # Final build (28-33s)
-        ("red",    3, 1870), ("yellow", 3, 1890),
-        ("green",  3, 1910), ("blue",   3, 1930),
-        ("red",    4, 1980), ("yellow", 4, 1990),
-        ("green",  4, 2000), ("blue",   4, 2010),
-        ("red",    5, 2060), ("green",  5, 2060),
-        ("yellow", 5, 2080), ("blue",   5, 2080),
-        ("red",    5, 2120), ("yellow", 5, 2125),
-        ("green",  5, 2130), ("blue",   5, 2135),
-        ("red",    5, 2160), ("yellow", 5, 2163),
-        ("green",  5, 2166), ("blue",   5, 2169),
-        # Outro (33-35s)
-        ("red",    2, 2200),
-        ("blue",   2, 2230),
-        ("yellow", 2, 2260),
-        ("green",  2, 2290),
-        """
     ]
 
     run_sequence(sequence)
