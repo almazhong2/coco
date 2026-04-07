@@ -4,6 +4,7 @@ import neopixel
 import RPi.GPIO as GPIO
 import pygame
 import os
+import random
 
 ################ CONFIGURATION ################
 os.environ["SDL_AUDIODRIVER"] = "alsa"
@@ -18,10 +19,19 @@ FLASH_FRAMES = 8
 HIT_ZONE_MIN = 25
 HIT_ZONE_MAX = 35
 
+PEBBLE_PIN = board.D21
+PEBBLE_COUNT = 100
+
 #for ending lights
 pixels = neopixel.NeoPixel(
     PIXEL_PIN, NUM_PIXELS,
     brightness = 0.1,
+    auto_write = False
+)
+
+pebbles = neopixel.NeoPixel(
+    PEBBLE_PIN, PEBBLE_COUNT,
+    brightness = 0.3,
     auto_write = False
 )
 
@@ -98,6 +108,96 @@ class Streak:
 
                 pixel_buffer[index] = (int(r*fade), int(g*fade), int(b*fade))
 
+################ ORANGE LIGHTS SETUP ################
+class UnderworldControl:
+    ORANGE_DIM = (20, 8, 0)
+    ORANGE_BRIGHT = (255, 80, 0)
+    WHITE = (255, 255, 255)
+
+    def __init__(self):
+        self.state = "IDLE"
+        self.hit_count = 0
+        self.frame = 0
+
+        self.idle_phase = 0.0
+        self.end_timers = [random.randint(0, 20) for _ in range(PEBBLE_COUNT)]
+    
+    def set_state(self, state):
+
+        self.state = state
+        self.frame = 0
+        
+        if state == "IDLE":
+            self.idle_phase = 0.0
+        if state == "PLAYING":
+            self.hit_count = 0
+        if state == "ENDING":
+            self.end_timers = [random.randint(0, 20) for _ in range(PEBBLE_COUNT)]
+    
+    def hit(self):
+        self.hit_count += 1
+    
+    def update(self):
+        if self.state == "IDLE":
+            self._update_idle()
+        elif self.state == "PLAYING":
+            self._update_playing()
+        elif self.state == "ENDING":
+            self._update_ending()
+        
+        self.frame += 1
+
+    
+    def _update_idle(self):
+        # triangle wave: phase 0-49 ramps up, 50-99 ramps down
+        self.idle_phase = (self.idle_phase + 0.5) % 100      
+        if self.idle_phase < 50:
+            brightness = self.idle_phase / 50
+        else:
+            brightness = (100 - self.idle_phase) / 50
+
+        # scale white by brightness, keep a dim floor
+        floor = 0.05
+        b     = floor + brightness * (1 - floor)
+        color = (int(255 * b), int(255 * b), int(255 * b))
+
+        pebbles.fill(color)
+        pebbles.show()
+    
+    def _update_playing(self):
+
+        # each hit lights up roughly 2 more pixels
+        lit = min(self.hit_count * 2, PEBBLE_COUNT)
+
+        for i in range(PEBBLE_COUNT):
+            if i < lit:
+                # scale brightness based on how high up we are
+                # pixels near bottom are dimmer, top brighter
+                progress = i / PEBBLE_COUNT
+                r = int(self.ORANGE_DIM[0] + 
+                        progress * (self.ORANGE_BRIGHT[0] - self.ORANGE_DIM[0]))
+                g = int(self.ORANGE_DIM[1] +
+                        progress * (self.ORANGE_BRIGHT[1] - self.ORANGE_DIM[1]))
+                b = 0
+                pebbles[i] = (r, g, b)
+            else:
+                pebbles[i] = self.ORANGE_DIM
+        
+        pebbles.show()
+
+    def _update_ending(self):
+
+        for i in range(PEBBLE_COUNT):
+            self.end_timers[i] -= 1
+            if self.end_timers[i] <= 0:
+                pebbles[i] = self.WHITE
+
+                self.end_timers[i] = random.randint(5, 30)
+            else:
+                pebbles[i] = (0, 0, 0)
+        
+        pebbles.show()
+
 
 ################ STRUM DETECTION ################
 class StrumDetector:
@@ -132,7 +232,7 @@ def button_pressed(active_streaks, button_states):
                     break
 
 #strum
-def check_strum(active_streaks, strum_detector):
+def check_strum(active_streaks, strum_detector, pebble):
     if not strum_detector.update():
         return
     
@@ -145,6 +245,7 @@ def check_strum(active_streaks, strum_detector):
     for streak in active_streaks:
         if streak.in_zone and streak.strip_name in held_buttons:
             streak.hit()
+            pebble.hit()
 
 #start
 def start_button_pressed(start_state):
@@ -153,7 +254,7 @@ def start_button_pressed(start_state):
     return pressed, held
 
 #main loop
-def run_sequence(sequence):
+def run_sequence(sequence, pebble):
     active_streaks = []
     pending = list(sequence)
     button_states = {}
@@ -169,6 +270,7 @@ def run_sequence(sequence):
         if state == "IDLE" and start_pressed:
             state = "RUNNING"
             pygame.mixer.music.play(loops=1)
+            pebble.set_state("PLAYING")
             print("Running")
 
         elif state == "RUNNING" and start_pressed:
@@ -183,12 +285,15 @@ def run_sequence(sequence):
             pygame.mixer.music.unpause()
             print("Resume")
         
+        pebble.update()
+        
         if state == "RUNNING":
             while pending and pending[0][2] <= frame:
                 name, speed, _ = pending.pop(0)
                 active_streaks.append(Streak(name, speed))
 
-            check_strum(active_streaks, strum_detector)
+            button_pressed(active_streaks, button_states)
+            check_strum(active_streaks, strum_detector, pebble)
             pixel_buffer = [(0, 0 , 0)] * NUM_PIXELS
         
             for streak in active_streaks:
@@ -206,6 +311,8 @@ def run_sequence(sequence):
                 pygame.mixer.music.stop()
                 pixels.fill((0,0,0))
                 pixels.show()
+                pebble.set_state("ENDING")
+                _run_ending(pebble)
                 return 
             
             frame += 1
@@ -213,9 +320,16 @@ def run_sequence(sequence):
         time.sleep(FRAME_DELAY)
         
 
+#end sequence
+def _run_ending(pebble):
+    end_duration = int(5 / FRAME_DELAY)
+    for _ in range(end_duration):
+        pebble.update()
+        time.sleep(FRAME_DELAY)
+    pebble.set_state("IDLE")
 
 #song and show
-def play_song():
+def play_song(pebble):
     pygame.mixer.init()
     pygame.mixer.music.load("song cut.mp3")
     pygame.mixer.music.set_volume(0.5)
@@ -242,11 +356,12 @@ def play_song():
         ("blue",   2, 500),
     ]
 
-    run_sequence(sequence)
+    run_sequence(sequence, pebble)
 
 try:
+    pebble = UnderworldControl()
     while True:
-        play_song()
+        play_song(pebble)
             
 except KeyboardInterrupt:
     pixels.fill((0,  0, 0))
