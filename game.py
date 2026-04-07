@@ -110,9 +110,15 @@ class Streak:
 
 ################ ORANGE LIGHTS SETUP ################
 class UnderworldControl:
-    ORANGE_DIM = (20, 8, 0)
-    ORANGE_BRIGHT = (255, 80, 0)
     WHITE = (255, 255, 255)
+
+    ORANGE_LEVELS = [
+        (8, 3, 0),
+        (30, 10, 0),
+        (80, 25, 0),
+        (160, 50, 0),
+        (255, 80, 0),
+    ]
 
     def __init__(self):
         self.state = "IDLE"
@@ -165,24 +171,23 @@ class UnderworldControl:
         pebbles.show()
     
     def _update_playing(self):
+        #orange will gradually get brighter across the strip
+        level_idx = min(self.hit_count // 10, len(self.ORANGE_LEVELS) - 1)
+        top_color = self.ORANGE_LEVELS[level_idx]
 
-        # each hit lights up roughly 2 more pixels
-        lit = min(self.hit_count * 2, PEBBLE_COUNT)
+        bottom_scale = 0.15
+        bottom_color = (
+            int(top_color[0]*bottom_scale),
+            int(top_color[1]*bottom_scale),
+            0
+        )
 
         for i in range(PEBBLE_COUNT):
-            if i < lit:
-                # scale brightness based on how high up we are
-                # pixels near bottom are dimmer, top brighter
-                progress = i / PEBBLE_COUNT
-                r = int(self.ORANGE_DIM[0] + 
-                        progress * (self.ORANGE_BRIGHT[0] - self.ORANGE_DIM[0]))
-                g = int(self.ORANGE_DIM[1] +
-                        progress * (self.ORANGE_BRIGHT[1] - self.ORANGE_DIM[1]))
-                b = 0
-                pebbles[i] = (r, g, b)
-            else:
-                pebbles[i] = self.ORANGE_DIM
-        
+            progress = i / (PEBBLE_COUNT - 1)
+            r = int(bottom_color[0] + progress*(top_color[0] - bottom_color[0]))
+            g = int(bottom_color[1] + progress*(top_color[1] - bottom_color[1]))
+            pebbles[i] = (r, g, 0)
+
         pebbles.show()
 
     def _update_ending(self):
@@ -190,7 +195,7 @@ class UnderworldControl:
         for i in range(PEBBLE_COUNT):
             self.end_timers[i] -= 1
             if self.end_timers[i] <= 0:
-                pebbles[i] = self.WHITE
+                pebbles[i] = self.ORANGE_LEVELS[-1]
 
                 self.end_timers[i] = random.randint(5, 30)
             else:
@@ -285,7 +290,8 @@ def run_sequence(sequence, pebble):
             pygame.mixer.music.unpause()
             print("Resume")
         
-        pebble.update()
+        if pebble.state != "ENDING":
+            pebble.update()
         
         if state == "RUNNING":
             while pending and pending[0][2] <= frame:
@@ -336,6 +342,7 @@ def play_song(pebble):
 
     sequence = [
         # Intro: slow, spaced (0-8s)
+        #color, speed, timing (i think starting from 1 would be ideal for speed)
         ("red",    2, 0),
         ("yellow", 2, 40),
         ("green",  2, 80),
