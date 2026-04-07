@@ -194,6 +194,17 @@ def play_song():
         ("green",  2, 220),
         ("yellow", 2, 300),
         ("blue",   2, 340),
+
+        #less spaced
+        ("red",    2, 360),
+        ("yellow", 2, 380),
+        ("green",  2, 400),
+        ("blue",   2, 420),
+        ("red",    2, 440),
+        ("green",  2, 460),
+        ("yellow", 2, 480),
+        ("blue",   2, 500),
+        
         # Building: pairs (8-16s)
         ("red",    3, 530),  ("green",  3, 530),
         ("yellow", 3, 580),  ("blue",   3, 580),
