@@ -375,8 +375,3 @@ except KeyboardInterrupt:
     pixels.show()
     pygame.mixer.music.stop()
     GPIO.cleanup()
-
-
-
-
-        
