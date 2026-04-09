@@ -373,7 +373,7 @@ def play_song(pebble):
     ("blue",  .75, 1020),
 
     ("yellow",    0.5, 1020),
-    ("blue", 0.5, 1050)
+    ("blue", 0.5, 1050),
 
     ]
 
