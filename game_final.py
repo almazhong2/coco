@@ -96,7 +96,7 @@ class Streak:
         
     
     def draw(self, pixel_buffer):
-        display_color = (255, 0, 165) if self.flash_frames > 0 else self.color
+        display_color = (30, 0, 255) if self.flash_frames > 0 else self.color
 
         for offset in range(STREAK_LENGTH):
             pos = self.head - offset
@@ -361,8 +361,8 @@ def play_song(pebble):
     ("blue",    1, 680),
     ("green",  1, 720),
     ("blue",   1, 800),
-    ("yellow", 1, 880),
-    ("red",    1, 900),
+    ("yellow", 1, 830),
+    ("red",    1, 860),
     ("yellow", 1, 910),
     ("blue",   1, 920),
     ]
