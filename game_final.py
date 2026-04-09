@@ -96,7 +96,7 @@ class Streak:
         
     
     def draw(self, pixel_buffer):
-        display_color = (0, 0, 120) if self.flash_frames > 0 else self.color
+        display_color = (255, 30, 0) if self.flash_frames > 0 else self.color
 
         for offset in range(STREAK_LENGTH):
             pos = self.head - offset
@@ -174,7 +174,7 @@ class UnderworldControl:
     def _update_playing(self):
         #orange will gradually get brighter across the strip
         # how many pebbles should be lit based on hit count
-        target_lit = min(self.hit_count * (PEBBLE_COUNT // 5), PEBBLE_COUNT)
+        target_lit = min(self.hit_count * (PEBBLE_COUNT // 15), PEBBLE_COUNT)
         for i in range(PEBBLE_COUNT):
             if i < target_lit:
                 progress = i / max(target_lit - 1, 1)
@@ -344,7 +344,7 @@ def play_song(pebble):
     ("red",   0.5,  200),
     ("red",  0.5,  220),
     ("yellow",    0.5, 240),
-    ("blue", 0.5, 240),
+    ("blue", 0.5, 240)
     ("yellow", 0.5, 280),
     ("green",   0.5, 320),
 
@@ -373,10 +373,7 @@ def play_song(pebble):
     ("blue",  .75, 1020),
 
     ("yellow",    0.5, 1020),
-    ("blue", 0.5, 1050),
-    ("green", 0.5, 1070),
-    ("green",   0.5, 1100),
-
+    ("blue", 0.5, 1050)
 
     ]
 
