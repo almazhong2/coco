@@ -167,8 +167,8 @@ class UnderworldControl:
         floor = 0.1
         b     = floor + brightness * (1 - floor)
         g_val = int(self.ORANGE_BRIGHT[0] * b)
-        r_val = int(self.ORANGE_BRIGHT[1] * b)
-        pebbles.fill((g_val, 0, r_val))   # GRB: (g, r, 0)
+        r_val = int(self.ORANGE_BRIGHT[2] * b)
+        pebbles.fill((int(15*b), 0, r_val))   # GRB: (g, r, 0)
         pebbles.show()
     
     def _update_playing(self):
@@ -179,8 +179,8 @@ class UnderworldControl:
             if i < target_lit:
                 progress = i / max(target_lit - 1, 1)
                 g_out = int(self.ORANGE_DIM[0] + progress * (self.ORANGE_MID[0] - self.ORANGE_DIM[0]))
-                r_out = int(self.ORANGE_DIM[1] + progress * (self.ORANGE_MID[1] - self.ORANGE_DIM[1]))
-                pebbles[i] = (g_out, r_out, 0)   # GRB: (g, r, 0)
+                r_out = int(self.ORANGE_DIM[2] + progress * (self.ORANGE_MID[2] - self.ORANGE_DIM[2]))
+                pebbles[i] = (g_out, 0, r_out)   # GRB: (g, r, 0)
             else:
                 pebbles[i] = self.OFF
         pebbles.show()
