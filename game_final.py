@@ -174,7 +174,7 @@ class UnderworldControl:
     def _update_playing(self):
         #orange will gradually get brighter across the strip
         # how many pebbles should be lit based on hit count
-        target_lit = min(self.hit_count * (PEBBLE_COUNT // 15), PEBBLE_COUNT)
+        target_lit = min(self.hit_count * (PEBBLE_COUNT // 25), PEBBLE_COUNT)
         for i in range(PEBBLE_COUNT):
             if i < target_lit:
                 progress = i / max(target_lit - 1, 1)
