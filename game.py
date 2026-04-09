@@ -54,11 +54,14 @@ GPIO.setup(STRUM_PIN, GPIO.IN, pull_up_down = GPIO.PUD_UP)
 
 ################ STRIP SETUP ################
 STRIPS = {
-    "red":      {"range": (0, 59), "forward": True, "color": (255, 0, 0)},
-    "yellow":   {"range": (60, 119), "forward": False, "color": (255, 255, 0)},
-    "green":    {"range": (120, 179), "forward": True, "color": (0, 255, 0)},
-    "blue":     {"range": (180, 239), "forward": False, "color": (0, 0, 255)},
+    "green":      {"range": (0, 59), "forward": False, "color": (0, 255, 0)},
+    "red":   {"range": (60, 119), "forward": True, "color": (255, 0, 0)},
+    "yellow":    {"range": (120, 179), "forward": False, "color": (255, 255, 51)},
+    "blue":     {"range": (180, 239), "forward": True, "color": (0, 0, 255)},
 }
+
+
+#green (0, 255, 0), red (255, 0, 0), yellow (255, 255, 51), blue (0, 0, 255)
 
 ################ STREAK CLASS ################
 class Streak:
@@ -375,3 +378,8 @@ except KeyboardInterrupt:
     pixels.show()
     pygame.mixer.music.stop()
     GPIO.cleanup()
+
+
+
+
+        
