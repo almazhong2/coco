@@ -1,5 +1,9 @@
 import pygame
 import time
+import os
+
+os.environ["SDL_AUDIODRIVER"] = "alsa"
+os.environ["AUDIODEV"] = "hw:2,0"
 
 # 1. Setup the player
 pygame.mixer.init()
