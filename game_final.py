@@ -33,7 +33,6 @@ pebbles = neopixel.NeoPixel(
     PEBBLE_PIN, PEBBLE_COUNT,
     brightness = 0.3,
     auto_write = False,
-    neopixel.
 )
 
 ################ GPIO SETUP ################
@@ -55,10 +54,10 @@ GPIO.setup(STRUM_PIN, GPIO.IN, pull_up_down = GPIO.PUD_UP)
 
 ################ STRIP SETUP ################
 STRIPS = {
-    "green":  {"range": (0,   59),  "forward": False, "color": (0,   255, 0),  "zone": (0,  3)},
-    "red":    {"range": (60,  119), "forward": True,  "color": (255, 0,   0),  "zone": (55, 59)},
-    "yellow": {"range": (120, 179), "forward": False, "color": (255, 255, 51), "zone": (0,  3)},
-    "blue":   {"range": (180, 239), "forward": True,  "color": (0,   0,   255),"zone": (55, 59)},
+    "green":  {"range": (0,   59),  "forward": False, "color": (0,   255, 0),  "zone": (0,  10)},
+    "red":    {"range": (60,  119), "forward": True,  "color": (255, 0,   0),  "zone": (50, 59)},
+    "yellow": {"range": (120, 179), "forward": False, "color": (255, 255, 51), "zone": (0,  10)},
+    "blue":   {"range": (180, 239), "forward": True,  "color": (0,   0,   255),"zone": (50, 59)},
 }
 
 #green (0, 255, 0), red (255, 0, 0), yellow (255, 255, 51), blue (0, 0, 255)
