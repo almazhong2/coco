@@ -17,7 +17,7 @@ STREAK_LENGTH = 12
 FLASH_FRAMES = 5
 
 HIT_ZONE_MIN = 45
-HIT_ZONE_MAX = 50
+HIT_ZONE_MAX = 55
 
 PEBBLE_PIN = board.D21
 PEBBLE_COUNT = 100
@@ -55,12 +55,11 @@ GPIO.setup(STRUM_PIN, GPIO.IN, pull_up_down = GPIO.PUD_UP)
 
 ################ STRIP SETUP ################
 STRIPS = {
-    "green":  {"range": (0,  59),  "forward": False, "color": (0,   255, 0),  "zone": (0,  7)},
-    "red":    {"range": (60, 119), "forward": True,  "color": (255, 0,   0),  "zone": (52, 59)},
-    "yellow": {"range": (120,179), "forward": False, "color": (255, 255, 51), "zone": (0,  7)},
-    "blue":   {"range": (180,239), "forward": True,  "color": (0,   0,   255),"zone": (52, 59)},
+    "green":  {"range": (0,   59),  "forward": False, "color": (0,   255, 0),  "zone": (0,  3)},
+    "red":    {"range": (60,  119), "forward": True,  "color": (255, 0,   0),  "zone": (55, 59)},
+    "yellow": {"range": (120, 179), "forward": False, "color": (255, 255, 51), "zone": (0,  3)},
+    "blue":   {"range": (180, 239), "forward": True,  "color": (0,   0,   255),"zone": (55, 59)},
 }
-
 
 #green (0, 255, 0), red (255, 0, 0), yellow (255, 255, 51), blue (0, 0, 255)
 
@@ -119,9 +118,10 @@ class UnderworldControl:
     WHITE = (255, 255, 255)
 
     # CORRECT — orange has r > g, b = 0
-    ORANGE_DIM    = (3,   8,  0)   # sends g=3, r=8  → shows as dim orange
-    ORANGE_MID    = (25,  80, 0)   # sends g=25, r=80 → shows as mid orange
-    ORANGE_BRIGHT = (80, 255, 0)   # sends g=80, r=255 → shows as bright orange
+    # ORANGE colors — correct for GRB (first=green channel, second=red channel)
+    ORANGE_DIM    = (3,   40,  0)   # g=3,  r=40  → dim orange
+    ORANGE_MID    = (15,  120, 0)   # g=15, r=120 → mid orange
+    ORANGE_BRIGHT = (30,  255, 0)   # g=30, r=255 → bright orange
     OFF           = (0,   0,  0)
 
     def __init__(self):
@@ -159,37 +159,31 @@ class UnderworldControl:
 
     
     def _update_idle(self):
-        # triangle wave: phase 0-49 ramps up, 50-99 ramps down
-        self.idle_phase = (self.idle_phase + 0.5) % 100      
+        self.idle_phase = (self.idle_phase + 0.5) % 100
         if self.idle_phase < 50:
             brightness = self.idle_phase / 50
         else:
             brightness = (100 - self.idle_phase) / 50
 
-        # scale white by brightness, keep a dim floor
-        floor = 0.05
+        floor = 0.1
         b     = floor + brightness * (1 - floor)
-        w = int(255*b)
-        pebbles.fill((w, w, w))
+        g_val = int(self.ORANGE_BRIGHT[0] * b)
+        r_val = int(self.ORANGE_BRIGHT[1] * b)
+        pebbles.fill((g_val, r_val, 0))   # GRB: (g, r, 0)
         pebbles.show()
     
     def _update_playing(self):
         #orange will gradually get brighter across the strip
         # how many pebbles should be lit based on hit count
         target_lit = min(self.hit_count * (PEBBLE_COUNT // 5), PEBBLE_COUNT)
-
         for i in range(PEBBLE_COUNT):
             if i < target_lit:
-                # gradient from dim at bottom to brighter at top of lit region
                 progress = i / max(target_lit - 1, 1)
-                r = int(self.ORANGE_DIM[0] +
-                        progress * (self.ORANGE_MID[0] - self.ORANGE_DIM[0]))
-                g = int(self.ORANGE_DIM[1] +
-                        progress * (self.ORANGE_MID[1] - self.ORANGE_DIM[1]))
-                pebbles[i] = (g, r, 0)   # ← CHANGED: 3-tuple RGB, no W
+                g_out = int(self.ORANGE_DIM[0] + progress * (self.ORANGE_MID[0] - self.ORANGE_DIM[0]))
+                r_out = int(self.ORANGE_DIM[1] + progress * (self.ORANGE_MID[1] - self.ORANGE_DIM[1]))
+                pebbles[i] = (g_out, r_out, 0)   # GRB: (g, r, 0)
             else:
                 pebbles[i] = self.OFF
-
         pebbles.show()
 
     def _update_ending(self):
@@ -197,7 +191,7 @@ class UnderworldControl:
         for i in range(PEBBLE_COUNT):
             self.end_timers[i] -= 1
             if self.end_timers[i] <= 0:
-                pebbles[i] = self.ORANGE_BRIGHT          # ← CHANGED: 3-tuple
+                pebbles[i] = self.ORANGE_MID          # ← CHANGED: 3-tuple
                 self.end_timers[i] = random.randint(20, 70)  # ← CHANGED: slow reset
             else:
                 pebbles[i] = self.OFF
