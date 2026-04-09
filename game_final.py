@@ -16,8 +16,8 @@ FRAME_DELAY = 0.02
 STREAK_LENGTH = 12
 FLASH_FRAMES = 8
 
-HIT_ZONE_MIN = 42
-HIT_ZONE_MAX = 55
+HIT_ZONE_MIN = 37
+HIT_ZONE_MAX = 50
 
 PEBBLE_PIN = board.D21
 PEBBLE_COUNT = 100
@@ -32,8 +32,7 @@ pixels = neopixel.NeoPixel(
 pebbles = neopixel.NeoPixel(
     PEBBLE_PIN, PEBBLE_COUNT,
     brightness = 0.3,
-    auto_write = False,
-    pixel_order = neopixel.GRBW
+    auto_write = False
 )
 
 ################ GPIO SETUP ################
@@ -102,9 +101,9 @@ class Streak:
             pos = self.head - offset
             if 0 <= pos <= self.length:
                 if self.forward:
-                    index = self.start + pos
+                    index = int(self.start + pos)
                 else:
-                    index= self.end - pos
+                    index= int(self.end - pos)
 
                 
                 fade = (STREAK_LENGTH - offset) / STREAK_LENGTH
@@ -114,15 +113,13 @@ class Streak:
 
 ################ ORANGE LIGHTS SETUP ################
 class UnderworldControl:
-    WHITE = (0, 0, 0, 255)
+    WHITE = (255, 255, 255)
 
-    ORANGE_LEVELS = [
-        (8, 3, 0, 0),
-        (30, 10, 0, 0),
-        (80, 25, 0, 0),
-        (160, 50, 0, 0),
-        (255, 80, 0, 0),
-    ]
+    # CORRECT — orange has r > g, b = 0
+    ORANGE_DIM    = (3,   8,  0)
+    ORANGE_MID    = (25,  80, 0)
+    ORANGE_BRIGHT = (80, 255, 0)
+    OFF           = (0,   0,  0)
 
     def __init__(self):
         self.state = "IDLE"
@@ -130,8 +127,7 @@ class UnderworldControl:
         self.frame = 0
 
         self.idle_phase = 0.0
-        self.lit_count = 0
-        self.end_timers = [random.randint(0, 20) for _ in range(PEBBLE_COUNT)]
+        self.end_timers = [random.randint(20, 60) for _ in range(PEBBLE_COUNT)]
     
     def set_state(self, state):
 
@@ -142,9 +138,8 @@ class UnderworldControl:
             self.idle_phase = 0.0
         if state == "PLAYING":
             self.hit_count = 0
-            self.lit_count = 0
         if state == "ENDING":
-            self.end_timers = [random.randint(0, 20) for _ in range(PEBBLE_COUNT)]
+            self.end_timers = [random.randint(20, 70) for _ in range(PEBBLE_COUNT)]
     
     def hit(self):
         self.hit_count += 1
@@ -172,35 +167,25 @@ class UnderworldControl:
         floor = 0.05
         b     = floor + brightness * (1 - floor)
         w = int(255*b)
-
-        pebbles.fill((0,0,0, w))
+        pebbles.fill((w, w, w))
         pebbles.show()
     
     def _update_playing(self):
         #orange will gradually get brighter across the strip
         # how many pebbles should be lit based on hit count
-        target_lit = min(self.hit_count * 2, PEBBLE_COUNT)
-
-        # pick brightness level based on hits
-        level_idx  = min(self.hit_count // 10, len(self.ORANGE_LEVELS) - 1)
-        top_color  = self.ORANGE_LEVELS[level_idx]
-
-        # bottom of lit region is dimmer — heat-rising feel
-        bottom_scale = 0.15
-        bottom_color = (
-            int(top_color[0] * bottom_scale),
-            int(top_color[1] * bottom_scale),
-            0, 0
-        )
+        target_lit = min(self.hit_count * (PEBBLE_COUNT // 10), PEBBLE_COUNT)
 
         for i in range(PEBBLE_COUNT):
             if i < target_lit:
+                # gradient from dim at bottom to brighter at top of lit region
                 progress = i / max(target_lit - 1, 1)
-                r = int(bottom_color[0] + progress * (top_color[0] - bottom_color[0]))
-                g = int(bottom_color[1] + progress * (top_color[1] - bottom_color[1]))
-                pebbles[i] = (r, g, 0, 0)   # ← CHANGED: 4-tuple for RGBW
+                r = int(self.ORANGE_DIM[0] +
+                        progress * (self.ORANGE_MID[0] - self.ORANGE_DIM[0]))
+                g = int(self.ORANGE_DIM[1] +
+                        progress * (self.ORANGE_MID[1] - self.ORANGE_DIM[1]))
+                pebbles[i] = (r, g, 0)   # ← CHANGED: 3-tuple RGB, no W
             else:
-                pebbles[i] = (0, 0, 0, 0)   # ← CHANGED: off pixels also 4-tuple
+                pebbles[i] = self.OFF
 
         pebbles.show()
 
@@ -209,13 +194,12 @@ class UnderworldControl:
         for i in range(PEBBLE_COUNT):
             self.end_timers[i] -= 1
             if self.end_timers[i] <= 0:
-                pebbles[i] = self.ORANGE_LEVELS[-1]
-
-                self.end_timers[i] = random.randint(15, 60)
+                pebbles[i] = self.ORANGE_BRIGHT          # ← CHANGED: 3-tuple
+                self.end_timers[i] = random.randint(20, 70)  # ← CHANGED: slow reset
             else:
-                pebbles[i] = (0, 0, 0, 0)
-        
+                pebbles[i] = self.OFF
         pebbles.show()
+
 
 
 ################ STRUM DETECTION ################
@@ -355,80 +339,34 @@ def play_song(pebble):
     pygame.mixer.music.set_volume(0.5)
 
     sequence = [
-        # ── Very gentle intro, one note at a time (0-13s)
-        ("green",  0.5,   0),
-        ("red",    0.5,  76),
-        ("yellow", 0.5, 152),
-        ("blue",   0.5, 228),
-        ("green",  0.5, 304),
-        ("red",    0.5, 380),
-        ("yellow", 0.5, 456),
-        ("blue",   0.5, 532),
-        ("green",  0.5, 608),
+    # Gentle intro, one note at a time (0-13s)
+    ("blue",   0.5,   0),
+    ("green",  0.5,  61),
+    ("red",    0.5, 137),
+    ("yellow", 0.5, 213),
+    ("blue",   0.5, 289),
 
-        # ── First verse: still single notes, speed 1 (13-26s)
-        ("red",    1,  650),
-        ("yellow", 1,  688),
-        ("blue",   1,  726),
-        ("green",  1,  764),
-        ("red",    1,  802),
-        ("yellow", 1,  840),
-        ("blue",   1,  878),
-        ("green",  1,  916),
-        ("red",    1,  954),
-        ("yellow", 1,  992),
-        ("blue",   1, 1030),
-        ("green",  1, 1068),
-        ("red",    1, 1106),
-        ("yellow", 1, 1144),
-        ("blue",   1, 1182),
-        ("green",  1, 1220),
-        ("red",    1, 1258),
+    # First verse: singles then a few pairs, speed 1 (13-26s)
+    ("yellow", 1,  635),
+    ("blue",   1,  673),
+    ("green",  1,  939),
+    ("blue",   1,  945),   # pair with green
+    ("red",    1,  977),
+    ("yellow", 1, 1015),
+    ("red",    1, 1020),   # pair with yellow
+    ("red",    1, 1091),
+    ("green",  1, 1129),
+    ("blue",   1, 1129),   # pair with green
 
-        # ── Build: pairs begin, speed 1.5 (26-39s)
-        ("yellow", 1.5, 1300),
-        ("blue",   1.5, 1300),
-        ("green",  1.5, 1338),
-        ("red",    1.5, 1338),
-        ("yellow", 1.5, 1376),
-        ("blue",   1.5, 1414),
-        ("green",  1.5, 1414),
-        ("red",    1.5, 1452),
-        ("yellow", 1.5, 1490),
-        ("blue",   1.5, 1490),
-        ("green",  1.5, 1528),
-        ("red",    1.5, 1566),
-        ("yellow", 1.5, 1566),
-        ("blue",   1.5, 1604),
-        ("green",  1.5, 1642),
-        ("red",    1.5, 1642),
-        ("yellow", 1.5, 1680),
-        ("blue",   1.5, 1718),
-        ("green",  1.5, 1756),
-        ("red",    1.5, 1794),
-        ("yellow", 1.5, 1832),
-        ("blue",   1.5, 1870),
-        ("green",  1.5, 1908),
-
-        # ── Final section: speed 2, fuller pairs (39-52s)
-        ("red",    2, 1950), ("yellow", 2, 1950),
-        ("blue",   2, 1988), ("green",  2, 1988),
-        ("red",    2, 2026), ("yellow", 2, 2040),
-        ("blue",   2, 2064), ("green",  2, 2078),
-        ("red",    2, 2102), ("yellow", 2, 2102),
-        ("blue",   2, 2140), ("green",  2, 2154),
-        ("red",    2, 2178), ("yellow", 2, 2192),
-        ("blue",   2, 2216), ("green",  2, 2216),
-        ("red",    2, 2254), ("yellow", 2, 2268),
-        ("blue",   2, 2292), ("green",  2, 2292),
-        ("red",    2, 2330), ("yellow", 2, 2344),
-        ("blue",   2, 2368),
-        ("green",  2, 2392),
-        ("red",    2, 2430),
-        ("yellow", 2, 2468),
-        ("blue",   2, 2506),
-        ("green",  2, 2544),
-        ("red",    2, 2582),
+    # Build: only a few 1.5s, not the full dense section
+    ("red",    1.5, 1285),
+    ("green",  1.5, 1285),
+    ("blue",   1.5, 1323),
+    ("yellow", 1.5, 1323),
+    ("red",    1.5, 1361),
+    ("yellow", 1.5, 1399),
+    ("red",    1.5, 1855),
+    ("blue",   1.5, 1893),
     ]
 
     run_sequence(sequence, pebble)
