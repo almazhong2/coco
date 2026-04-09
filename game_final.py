@@ -377,6 +377,10 @@ def play_song(pebble):
     ("red", 1, 1080),
     ("green", 1, 1080),
 
+    ("yellow", 1, 1100),
+    ("blue", 1, 1130),
+    ("yellow", 1, 1160),
+    ("green",   1, 1190)
     ]
 
     run_sequence(sequence, pebble)
