@@ -13,7 +13,7 @@ os.environ["AUDIODEV"] = "hw:2,0"
 PIXEL_PIN = board.D18
 NUM_PIXELS = 240
 FRAME_DELAY = 0.02
-STREAK_LENGTH = 12
+STREAK_LENGTH = 4
 FLASH_FRAMES = 5
 
 HIT_ZONE_MIN = 45
@@ -32,7 +32,8 @@ pixels = neopixel.NeoPixel(
 pebbles = neopixel.NeoPixel(
     PEBBLE_PIN, PEBBLE_COUNT,
     brightness = 0.3,
-    auto_write = False
+    auto_write = False,
+    neopixel.
 )
 
 ################ GPIO SETUP ################
@@ -168,7 +169,7 @@ class UnderworldControl:
         b     = floor + brightness * (1 - floor)
         g_val = int(self.ORANGE_BRIGHT[0] * b)
         r_val = int(self.ORANGE_BRIGHT[1] * b)
-        pebbles.fill((g_val, r_val, 0))   # GRB: (g, r, 0)
+        pebbles.fill((g_val, 0, r_val))   # GRB: (g, r, 0)
         pebbles.show()
     
     def _update_playing(self):
