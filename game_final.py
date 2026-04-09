@@ -32,8 +32,7 @@ pixels = neopixel.NeoPixel(
 pebbles = neopixel.NeoPixel(
     PEBBLE_PIN, PEBBLE_COUNT,
     brightness = 0.3,
-    auto_write = False,
-    pixel_order = neopixel.GRB
+    auto_write = False
 )
 
 ################ GPIO SETUP ################
@@ -119,9 +118,9 @@ class UnderworldControl:
 
     # CORRECT — orange has r > g, b = 0
     # ORANGE colors — correct for GRB (first=green channel, second=red channel)
-    ORANGE_DIM    = (3,   40,  0)   # g=3,  r=40  → dim orange
-    ORANGE_MID    = (15,  120, 0)   # g=15, r=120 → mid orange
-    ORANGE_BRIGHT = (30,  255, 0)   # g=30, r=255 → bright orange
+    ORANGE_DIM    = (3,   0,  40)   # g=3,  r=40  → dim orange
+    ORANGE_MID    = (15,  0, 120)   # g=15, r=120 → mid orange
+    ORANGE_BRIGHT = (30,  0, 255)   # g=30, r=255 → bright orange
     OFF           = (0,   0,  0)
 
     def __init__(self):
