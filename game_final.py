@@ -55,7 +55,7 @@ GPIO.setup(STRUM_PIN, GPIO.IN, pull_up_down = GPIO.PUD_UP)
 ################ STRIP SETUP ################
 STRIPS = {
     "green":  {"range": (0,   59),  "forward": False, "color": (0,   255, 0),  "zone": (50,  59)},
-    "red":    {"range": (60,  119), "forward": True,  "color": (238, 75, 43),  "zone": (50, 59)},
+    "red":    {"range": (60,  119), "forward": True,  "color": (210, 10, 46),  "zone": (50, 59)},
     "yellow": {"range": (120, 179), "forward": False, "color": (255, 255, 51), "zone": (50,  59)},
     "blue":   {"range": (180, 239), "forward": True,  "color": (0,   0,   255),"zone": (50, 59)},
 }
