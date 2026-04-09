@@ -96,7 +96,7 @@ class Streak:
         
     
     def draw(self, pixel_buffer):
-        display_color = (255, 255, 255) if self.flash_frames > 0 else self.color
+        display_color = (255, 0, 165) if self.flash_frames > 0 else self.color
 
         for offset in range(STREAK_LENGTH):
             pos = self.head - offset
@@ -336,32 +336,35 @@ def play_song(pebble):
 
     sequence = [
     # Gentle intro, one note at a time (0-4s)
-    ("blue",   0.75,   0),
-    ("green",  0.75,  40),
-    ("red",    0.75, 90),
-    ("yellow", 0.75, 140),
-    ("blue",   0.75, 180),
+    ("blue",   0.5,   0),
+    ("green",  0.5,  40),
+    ("red",    0.5, 80),
+    ("green", 0.5, 140),
+    ("blue",   0.5, 180),
+    ("red",   0.5,  200),
+    ("red",  0.5,  220),
+    ("yellow",    0.5, 240),
+    ("yellow", 0.5, 280),
+    ("green",   0.5, 320),
 
     # First verse: singles then a few pairs (4-14s)
-    ("yellow", 1, 200),
-    ("blue",   1, 210),
-    ("green",  1, 250),
-    ("blue",   1, 300),   # pair with green
-    ("red",    1, 350),
-    ("yellow", 1, 350),
-    ("red",    1, 400),   # pair with yellow
-    ("red",    1, 430),
-    ("green",  1, 460),
-    ("blue",   1, 490),   # pair with green
+    ("yellow", .75, 350),
+    ("blue",   .75, 400),
+    ("green",  .75, 430),
+    ("blue",   .75, 460),   # pair with green
+    ("red",    .75, 460),
+    ("yellow", .75, 520),
+    ("red",    .75, 600),   # pair with yellow
+    ("red",    .75, 630),
+    ("green",  .75, 630),
 
-    # Build: a few 1.5s (14-20s)
-    ("red",    1.5, 510),
-    ("green",  1.5, 530),
-    ("blue",   1.5, 530),
-    ("yellow", 1.5, 550),
-    ("red",    1.5, 590),
-    ("yellow", 1.5, 620),
-    ("blue",   1.5, 650),
+    ("blue",    1, 680),
+    ("green",  1, 720),
+    ("blue",   1, 800),
+    ("yellow", 1, 880),
+    ("red",    1, 900),
+    ("yellow", 1, 910),
+    ("blue",   1, 920),
     ]
 
     run_sequence(sequence, pebble)
