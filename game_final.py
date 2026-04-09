@@ -14,7 +14,7 @@ PIXEL_PIN = board.D18
 NUM_PIXELS = 240
 FRAME_DELAY = 0.02
 STREAK_LENGTH = 12
-FLASH_FRAMES = 8
+FLASH_FRAMES = 5
 
 HIT_ZONE_MIN = 45
 HIT_ZONE_MAX = 50
@@ -55,10 +55,10 @@ GPIO.setup(STRUM_PIN, GPIO.IN, pull_up_down = GPIO.PUD_UP)
 
 ################ STRIP SETUP ################
 STRIPS = {
-    "green":      {"range": (0, 59), "forward": False, "color": (0, 255, 0)},
-    "red":   {"range": (60, 119), "forward": True, "color": (255, 0, 0)},
-    "yellow":    {"range": (120, 179), "forward": False, "color": (255, 255, 51)},
-    "blue":     {"range": (180, 239), "forward": True, "color": (0, 0, 255)},
+    "green":  {"range": (0,  59),  "forward": False, "color": (0,   255, 0),  "zone": (0,  7)},
+    "red":    {"range": (60, 119), "forward": True,  "color": (255, 0,   0),  "zone": (52, 59)},
+    "yellow": {"range": (120,179), "forward": False, "color": (255, 255, 51), "zone": (0,  7)},
+    "blue":   {"range": (180,239), "forward": True,  "color": (0,   0,   255),"zone": (52, 59)},
 }
 
 
@@ -74,6 +74,8 @@ class Streak:
         self.end = strip["range"][1]
         self.length = self.end - self.start
         self.forward = strip["forward"]
+        self.zone_min = strip["zone"][0]   # ← NEW
+        self.zone_max = strip["zone"][1]
         self.speed = speed
         self.head = -STREAK_LENGTH
         self.flash_frames = 0
@@ -84,7 +86,7 @@ class Streak:
     
     @property
     def in_zone(self):
-        return HIT_ZONE_MIN <= self. head <= HIT_ZONE_MAX
+        return self.zone_min <= int(self.head) <= self.zone_max
     
     def hit(self):
         self.flash_frames = FLASH_FRAMES
@@ -117,9 +119,9 @@ class UnderworldControl:
     WHITE = (255, 255, 255)
 
     # CORRECT — orange has r > g, b = 0
-    ORANGE_DIM    = (3,   8,  0)
-    ORANGE_MID    = (25,  80, 0)
-    ORANGE_BRIGHT = (80, 255, 0)
+    ORANGE_DIM    = (3,   8,  0)   # sends g=3, r=8  → shows as dim orange
+    ORANGE_MID    = (25,  80, 0)   # sends g=25, r=80 → shows as mid orange
+    ORANGE_BRIGHT = (80, 255, 0)   # sends g=80, r=255 → shows as bright orange
     OFF           = (0,   0,  0)
 
     def __init__(self):
@@ -174,7 +176,7 @@ class UnderworldControl:
     def _update_playing(self):
         #orange will gradually get brighter across the strip
         # how many pebbles should be lit based on hit count
-        target_lit = min(self.hit_count * (PEBBLE_COUNT // 10), PEBBLE_COUNT)
+        target_lit = min(self.hit_count * (PEBBLE_COUNT // 5), PEBBLE_COUNT)
 
         for i in range(PEBBLE_COUNT):
             if i < target_lit:
@@ -184,7 +186,7 @@ class UnderworldControl:
                         progress * (self.ORANGE_MID[0] - self.ORANGE_DIM[0]))
                 g = int(self.ORANGE_DIM[1] +
                         progress * (self.ORANGE_MID[1] - self.ORANGE_DIM[1]))
-                pebbles[i] = (r, g, 0)   # ← CHANGED: 3-tuple RGB, no W
+                pebbles[i] = (g, r, 0)   # ← CHANGED: 3-tuple RGB, no W
             else:
                 pebbles[i] = self.OFF
 
@@ -341,32 +343,32 @@ def play_song(pebble):
 
     sequence = [
     # Gentle intro, one note at a time (0-4s)
-    ("blue",   0.5,   0),
-    ("green",  0.5,  80),
-    ("red",    0.5, 160),
-    ("yellow", 0.5, 240),
-    ("blue",   0.5, 320),
+    ("blue",   0.75,   0),
+    ("green",  0.75,  40),
+    ("red",    0.75, 90),
+    ("yellow", 0.75, 140),
+    ("blue",   0.75, 180),
 
     # First verse: singles then a few pairs (4-14s)
-    ("yellow", 1, 400),
-    ("blue",   1, 440),
-    ("green",  1, 500),
-    ("blue",   1, 506),   # pair with green
-    ("red",    1, 580),
-    ("yellow", 1, 640),
-    ("red",    1, 646),   # pair with yellow
-    ("red",    1, 720),
-    ("green",  1, 780),
-    ("blue",   1, 780),   # pair with green
+    ("yellow", 1, 200),
+    ("blue",   1, 210),
+    ("green",  1, 250),
+    ("blue",   1, 300),   # pair with green
+    ("red",    1, 350),
+    ("yellow", 1, 350),
+    ("red",    1, 400),   # pair with yellow
+    ("red",    1, 430),
+    ("green",  1, 460),
+    ("blue",   1, 490),   # pair with green
 
     # Build: a few 1.5s (14-20s)
-    ("red",    1.5, 860),
-    ("green",  1.5, 860),
-    ("blue",   1.5, 900),
-    ("yellow", 1.5, 900),
-    ("red",    1.5, 940),
-    ("yellow", 1.5, 970),
-    ("blue",   1.5, 1000),
+    ("red",    1.5, 510),
+    ("green",  1.5, 530),
+    ("blue",   1.5, 530),
+    ("yellow", 1.5, 550),
+    ("red",    1.5, 590),
+    ("yellow", 1.5, 620),
+    ("blue",   1.5, 650),
     ]
 
     run_sequence(sequence, pebble)
