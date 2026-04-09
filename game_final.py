@@ -16,7 +16,7 @@ FRAME_DELAY = 0.02
 STREAK_LENGTH = 12
 FLASH_FRAMES = 8
 
-HIT_ZONE_MIN = 37
+HIT_ZONE_MIN = 45
 HIT_ZONE_MAX = 50
 
 PEBBLE_PIN = board.D21
@@ -32,7 +32,8 @@ pixels = neopixel.NeoPixel(
 pebbles = neopixel.NeoPixel(
     PEBBLE_PIN, PEBBLE_COUNT,
     brightness = 0.3,
-    auto_write = False
+    auto_write = False,
+    pixel_order = neopixel.GRB
 )
 
 ################ GPIO SETUP ################
@@ -339,34 +340,33 @@ def play_song(pebble):
     pygame.mixer.music.set_volume(0.5)
 
     sequence = [
-    # Gentle intro, one note at a time (0-13s)
+    # Gentle intro, one note at a time (0-4s)
     ("blue",   0.5,   0),
-    ("green",  0.5,  61),
-    ("red",    0.5, 137),
-    ("yellow", 0.5, 213),
-    ("blue",   0.5, 289),
+    ("green",  0.5,  80),
+    ("red",    0.5, 160),
+    ("yellow", 0.5, 240),
+    ("blue",   0.5, 320),
 
-    # First verse: singles then a few pairs, speed 1 (13-26s)
-    ("yellow", 1,  635),
-    ("blue",   1,  673),
-    ("green",  1,  939),
-    ("blue",   1,  945),   # pair with green
-    ("red",    1,  977),
-    ("yellow", 1, 1015),
-    ("red",    1, 1020),   # pair with yellow
-    ("red",    1, 1091),
-    ("green",  1, 1129),
-    ("blue",   1, 1129),   # pair with green
+    # First verse: singles then a few pairs (4-14s)
+    ("yellow", 1, 400),
+    ("blue",   1, 440),
+    ("green",  1, 500),
+    ("blue",   1, 506),   # pair with green
+    ("red",    1, 580),
+    ("yellow", 1, 640),
+    ("red",    1, 646),   # pair with yellow
+    ("red",    1, 720),
+    ("green",  1, 780),
+    ("blue",   1, 780),   # pair with green
 
-    # Build: only a few 1.5s, not the full dense section
-    ("red",    1.5, 1285),
-    ("green",  1.5, 1285),
-    ("blue",   1.5, 1323),
-    ("yellow", 1.5, 1323),
-    ("red",    1.5, 1361),
-    ("yellow", 1.5, 1399),
-    ("red",    1.5, 1855),
-    ("blue",   1.5, 1893),
+    # Build: a few 1.5s (14-20s)
+    ("red",    1.5, 860),
+    ("green",  1.5, 860),
+    ("blue",   1.5, 900),
+    ("yellow", 1.5, 900),
+    ("red",    1.5, 940),
+    ("yellow", 1.5, 970),
+    ("blue",   1.5, 1000),
     ]
 
     run_sequence(sequence, pebble)
