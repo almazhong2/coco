@@ -187,6 +187,27 @@ class UnderworldControl:
 
     def _update_ending(self):
 
+        # one sweep = 125 frames at FRAME_DELAY 0.02 = 2.5 seconds
+        sweep_frame = self.frame % 125
+        sweep_pos   = sweep_frame / 125.0   # 0.0 to 1.0 across the strip
+    
+        for i in range(PEBBLE_COUNT):
+            # distance of this pixel from the sweep front (0.0 to 1.0)
+            pixel_pos = i / PEBBLE_COUNT
+            distance  = abs(pixel_pos - sweep_pos)
+    
+            # bright at the front, fades quickly behind
+            if distance < 0.15:
+                brightness = 1.0 - (distance / 0.15)
+            else:
+                brightness = 0.05   # dim floor everywhere else
+    
+            g_out = int(self.ORANGE_BRIGHT[0] * brightness)
+            r_out = int(self.ORANGE_BRIGHT[2] * brightness)
+            pebbles[i] = (g_out, 0, r_out)
+    
+        pebbles.show()
+        """
         for i in range(PEBBLE_COUNT):
             self.end_timers[i] -= 1
             if self.end_timers[i] <= 0:
@@ -194,8 +215,7 @@ class UnderworldControl:
                 self.end_timers[i] = random.randint(20, 70)  # ← CHANGED: slow reset
             else:
                 pebbles[i] = self.OFF
-        pebbles.show()
-
+        """
 
 
 ################ STRUM DETECTION ################
@@ -253,7 +273,7 @@ def start_button_pressed(start_state):
     return pressed, held
 
 #main loop
-def run_sequence(sequence, pebble):
+def run_sequence(sequence, pebble, transition_sound):
     active_streaks = []
     pending = list(sequence)
     button_states = {}
@@ -312,6 +332,7 @@ def run_sequence(sequence, pebble):
                 pixels.fill((0,0,0))
                 pixels.show()
                 pebble.set_state("ENDING")
+                transition_sound.play()
                 _run_ending(pebble)
                 return 
             
@@ -333,6 +354,8 @@ def play_song(pebble):
     pygame.mixer.init()
     pygame.mixer.music.load("rememberme.mp3")
     pygame.mixer.music.set_volume(0.5)
+
+    transition_sound = pygame.mixer.Sound("transition.mp3")
 
     sequence = [
     # Gentle intro, one note at a time (0-4s)
@@ -380,10 +403,11 @@ def play_song(pebble):
     ("yellow", 1, 1100),
     ("blue", 1, 1130),
     ("yellow", 1, 1160),
-    ("green",   1, 1190)
+    ("green",   1, 1190),
+    ("red", 1, 1210)
     ]
 
-    run_sequence(sequence, pebble)
+    run_sequence(sequence, pebble, transition_sound)
 
 try:
     pebble = UnderworldControl()
